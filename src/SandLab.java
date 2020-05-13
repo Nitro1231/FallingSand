@@ -142,55 +142,52 @@ public class SandLab {
     int col = (int)(Math.random() * grid[0].length);
     switch(grid[row][col]) {
       case SAND:
-        if (row < grid.length -1) { // If the sand is not reached to the bottom yet.
-          if (grid[row + 1][col] == EMPTY) { // If nothing exist under the sand, fall down one row.
-            grid[row][col] = EMPTY;
-            grid[row + 1][col] = SAND;
-          } else if (grid[row + 1][col] == WATER) {
-            grid[row][col] = WATER;
+        // Interactable Objects
+        int[] interactableObj = {EMPTY, WATER};
+
+        // If the sand is not reached to the bottom yet.
+        if (row < grid.length -1) {
+          // can be -1, EMPTY, or WATER.
+          int type = checkType(grid[row + 1][col], interactableObj);
+
+          // If nothing or water exist under the sand, fall down one row.
+          if (type != -1) {
+            grid[row][col] = type;
             grid[row + 1][col] = SAND;
           } else if (grid[row + 1][col] == SAND) { // If there is a another sand exist under the sand.
             if (col == grid[0].length - 1) { // If the location is rightmost
-              if (grid[row + 1][col -1] == EMPTY) {
-                grid[row][col] = EMPTY;
-                grid[row + 1][col - 1] = SAND;
-              } else if (grid[row + 1][col -1] == WATER) {
-                grid[row][col] = WATER;
+              int left = checkType(grid[row + 1][col - 1], interactableObj);
+              if (left != -1) { // Check left side
+                grid[row][col] = left;
                 grid[row + 1][col - 1] = SAND;
               }
+              return;
             } else if (col == 0) { // If the location is leftmost
-              if (grid[row + 1][col + 1] == EMPTY) {
-                grid[row][col] = EMPTY;
-                grid[row + 1][col + 1] = SAND;
-              } else if (grid[row + 1][col + 1] == WATER) {
-                grid[row][col] = WATER;
+              int right = checkType(grid[row + 1][col + 1], interactableObj);
+              if (right != -1) { // Check right side
+                grid[row][col] = right;
                 grid[row + 1][col + 1] = SAND;
               }
-            } else if (grid[row + 1][col + 1] == EMPTY && grid[row + 1][col - 1] == EMPTY) { // If either left or right side of the bottom sand is empty,
-              int LR = (int) (Math.random() * 2); // randomly assigned the sand either left or right side.
-              grid[row][col] = EMPTY;
-              if (LR == 0)
-                grid[row + 1][col - 1] = SAND;
-              else
+              return;
+            }
+            int left = checkType(grid[row + 1][col - 1], interactableObj);
+            int right = checkType(grid[row + 1][col + 1], interactableObj);
+            // If either left or right side of the bottom sand is empty,
+            if (left != -1 && right != -1) {
+              // randomly assigned the sand either left or right side.
+              int LR = (int) (Math.random() * 2);
+              if (LR == 0) {
+                grid[row][col] = right; // Exchange with right side obj.
                 grid[row + 1][col + 1] = SAND;
-            } else if (grid[row + 1][col + 1] == WATER && grid[row + 1][col - 1] == WATER) { // If either left or right side of the bottom sand is empty,
-              int LR = (int)(Math.random()*2); // randomly assigned the sand either left or right side.
-              grid[row][col] = WATER;
-              if (LR == 0)
+              } else {
+                grid[row][col] = left; // Exchange with left side obj.
                 grid[row + 1][col - 1] = SAND;
-              else
-                grid[row + 1][col + 1] = SAND;
-            } else if (grid[row + 1][col + 1] == EMPTY) { // If the right side of the bottom sand is empty,
-              grid[row][col] = EMPTY;
+              }
+            } else if (right != -1) { // If the right side of the bottom sand is empty,
+              grid[row][col] = right;
               grid[row + 1][col + 1] = SAND;
-            } else if (grid[row + 1][col + 1] == WATER) { // If the right side of the bottom sand is empty,
-              grid[row][col] = WATER;
-              grid[row + 1][col + 1] = SAND;
-            } else if (grid[row + 1][col - 1] == EMPTY) { // If the right side of the bottom sand is empty,
-              grid[row][col] = EMPTY;
-              grid[row + 1][col - 1] = SAND;
-            } else if (grid[row + 1][col - 1] == WATER) { // If the right side of the bottom sand is empty,
-              grid[row][col] = WATER;
+            } else if (left != -1) { // If the right side of the bottom sand is empty,
+              grid[row][col] = left;
               grid[row + 1][col - 1] = SAND;
             }
           }
@@ -271,11 +268,15 @@ public class SandLab {
     }
   }
 
-  public int checkArr(int obj, int[] arr) {
+  /** Check if obj exists in arr.
+   *  @return Return the block id (int) if the obj exists in arr.
+   *          Return -1 if obj does not exist in arr.
+   */
+  public int checkType(int obj, int[] arr) {
     for (int i : arr)
       if (obj == i)
-        return 1;
-     return 1;
+        return i;
+    return -1;
   }
 
   //do not modify
