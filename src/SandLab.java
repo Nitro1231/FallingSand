@@ -23,6 +23,8 @@
 import java.awt.*;
 import java.util.*;
 
+//https://sandspiel.club/
+
 public class SandLab {
   public static void main(String[] args) {
     SandLab lab = new SandLab(120, 80); // the window dimensions. change if you want a larger/smaller area
@@ -88,6 +90,7 @@ public class SandLab {
   public void updateDisplay() {
     for(int row = 0; row < grid.length; row++) {
       for(int col = 0; col < grid[0].length; col++) {
+        int offset = (int)(Math.random()*40-20);
         switch(grid[row][col]) {
           case EMPTY:
             display.setColor(row, col, new Color(0, 0, 0));
@@ -99,10 +102,10 @@ public class SandLab {
             display.setColor(row, col, new Color(255, 200, 0));
             break;
           case WATER:
-            display.setColor(row, col, new Color(0, 128, 255));
+            display.setColor(row, col, new Color(30 + offset, 128 + offset, 255));
             break;
           case OIL:
-            display.setColor(row, col, new Color(40, 20, 5));
+            display.setColor(row, col, new Color(40 + offset, 30 + offset, 5));
             break;
           case WOOD:
             display.setColor(row, col, new Color(120, 60, 0));
@@ -114,17 +117,16 @@ public class SandLab {
             display.setColor(row, col, new Color(170, 220, 255));
             break;
           case FIRE:
-            int offset = (int)(Math.random()*40-20);
-            display.setColor(row, col, new Color(255 + offset, 100 + offset, 0));
+            display.setColor(row, col, new Color(215 + offset, 100 + offset, 0));
             break;
           case LAVA:
-            display.setColor(row, col, new Color(255, 50, 0));
+            display.setColor(row, col, new Color(215 + offset, 50 + offset, 30 + offset));
             break;
           case STONE:
             display.setColor(row, col, new Color(150, 150, 150));
             break;
           case OBSIDIAN:
-            display.setColor(row, col, new Color(50, 30, 160));
+            display.setColor(row, col, new Color(110, 0, 180));
             break;
           case TNT:
             display.setColor(row, col, new Color(170, 0, 0));
@@ -224,7 +226,7 @@ public class SandLab {
             }
             if (leftEmpty == rightEmpty && leftEmpty == 0) {
               int rd = (int)(Math.random() * 3) - 1;
-              if (col + rd > 1 && col + rd < grid[0].length - 2) {
+              if (col + rd >= 0 && col + rd <= grid[0].length - 1) {
                 int change = checkType(grid[row][col + rd], intObj);
                 if (change != -1) {
                   grid[row][col] = change;
@@ -286,8 +288,7 @@ public class SandLab {
         }
         break;
       case ICE:
-        int rd = (int)(Math.random() * 100) + 1; // 4/100 chance
-        switch (rd){
+        switch ((int)(Math.random() * 100) + 1){ // 4/100 chance
           case 1: // Up
             if (row - 1 > 0 && grid[row - 1][col] == WATER)
               grid[row - 1][col] = ICE;
@@ -307,7 +308,79 @@ public class SandLab {
         }
         break;
       case FIRE:
-
+        int[] burnableObj = {FIRE, TNT, GAS, OIL, LEAF, WOOD, WATER, ICE};
+        int newRow = row, newCol = col;
+        switch ((int)(Math.random() * 9) + 1){
+          case 1: // Left && Top
+              newRow = row - 1;
+              newCol = col - 1;
+            break;
+          case 2: // Top
+              newRow = row - 1;
+            break;
+          case 3: // Top && Right
+              newRow = row - 1;
+              newCol = col + 1;
+            break;
+          case 4: // Left
+              newCol = col - 1;
+            break;
+          case 5: // Right
+              newCol = col + 1;
+            break;
+          case 6: // Bottom && Left
+              newRow = row + 1;
+              newCol = col - 1;
+            break;
+          case 7: // Bottom
+              newRow = row + 1;
+            break;
+          case 8: // Bottom && Right
+              newRow = row + 1;
+              newCol = col + 1;
+            break;
+        }
+        if (newRow < 0 || newRow > grid.length - 1 || newCol < 0 || newCol > grid[0].length - 1) {
+          newRow = row;
+          newCol = col;
+        }
+        int type = checkType(grid[newRow][newCol], burnableObj);
+        switch (type) {
+          case FIRE:
+            if (((int)(Math.random() * 80) + 1) == 1)
+              grid[newRow][newCol] = EMPTY;
+            if (newRow - 1 > 0 && ((int)(Math.random() * 85) + 1) == 1)
+              grid[newRow-1][newCol] = FIRE;
+            break;
+          case TNT: case GAS:
+            if (((int)(Math.random() * 3) + 1) == 1)
+              grid[newRow][newCol] = FIRE;
+            break;
+          case OIL:
+            if (((int)(Math.random() * 7) + 1) == 1)
+              grid[newRow][newCol] = FIRE;
+            break;
+          case LEAF:
+            if (((int)(Math.random() * 30) + 1) == 1)
+              grid[newRow][newCol] = FIRE;
+            break;
+          case WOOD:
+            if (((int)(Math.random() * 40) + 1) == 1)
+              grid[newRow][newCol] = FIRE;
+            break;
+          case WATER:
+            if (newRow - 1 > 0 && ((int)(Math.random() * 200) + 1) == 1) {
+              grid[newRow][newCol] = FIRE;
+              grid[newRow][newCol + 1] = STEAM;
+            }
+            break;
+          case ICE:
+            if (newRow - 1 > 0 && ((int)(Math.random() * 250) + 1) == 1) {
+              grid[newRow][newCol] = WATER;
+              grid[newRow][newCol + 1] = STEAM;
+            }
+            break;
+        }
         break;
       case LAVA:
         display.setColor(row, col, new Color(255, 50, 0));
