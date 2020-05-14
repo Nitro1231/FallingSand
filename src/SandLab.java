@@ -31,21 +31,24 @@ public class SandLab {
 
   //add constants for particle types here
   public static final int EMPTY = 0;
-  public static final int METAL = 1;
-  public static final int SAND = 2;
-  public static final int WATER = 3;
-  public static final int OIL = 4;
-  public static final int WOOD = 5;
-  public static final int LEAF = 6;
-  public static final int ICE = 7;
-  public static final int FIRE = 8;
-  public static final int LAVA = 9;
-  public static final int STONE = 10;
-  public static final int OBSIDIAN = 11;
-  public static final int TNT = 12;
-  public static final int SOIL = 13;
-  public static final int STEAM = 14;
-  public static final int GRASS = 15;
+  public static final int METAL = 1;      // JUST STAY THERE
+  public static final int SAND = 2;       // *SAND* < WATER, OIL, STEAM, GAS / Overwrite: FIRE
+  public static final int WATER = 3;      // SAND < *WATER* < OIL, GAS  / Overwrite: FIRE
+  public static final int OIL = 4;        // Work same as WATER, but above WATER
+  public static final int WOOD = 5;       // SAME AS METAL, but burnable
+  public static final int LEAF = 6;       // SAME AS METAL, but burnable
+  public static final int ICE = 7;        // Freeze water / Overwrite: FIRE / Melt by FIRE
+  public static final int FIRE = 8;       // Interval: TNT, GAS < OIL < LEAF < WOOD < WATER < ICE / Melt ICE / Form STEAM when WATER or ICE is exist
+  public static final int LAVA = 9;       // If WATER is under the LAVA ==> STONE / If Water is above the LAVA ==> OBSIDIAN
+  public static final int STONE = 10;     // Fall down straightly
+  public static final int OBSIDIAN = 11;  // Same as metal
+  public static final int TNT = 12;       // Explosion / React with FIRE and LAVA
+  public static final int SOIL = 13;      // Same as SAND
+  public static final int STEAM = 14;     // SAND, SOIL, GAS, OIL, WATER < STEAM
+  public static final int GRASS = 15;     // Formed when SAND react with LAVA and FIRE
+  public static final int GAS = 16;       // Explosion / React with FIRE and LAVA
+
+  public static final int CLEAR = 17; // Clear all
 
   //do not add any more fields
   private int[][] grid;
@@ -54,7 +57,7 @@ public class SandLab {
   public SandLab(int numRows, int numCols) {
     grid = new int[numRows][numCols];
     String[] names;
-    names = new String[16];
+    names = new String[18];
     names[EMPTY] = "Empty";
     names[METAL] = "Metal";
     names[SAND] = "Sand";
@@ -71,6 +74,8 @@ public class SandLab {
     names[SOIL] = "Soil";
     names[STEAM] = "Steam";
     names[GRASS] = "Grass";
+    names[GAS] = "Gas";
+    names[CLEAR] = "Clear";
     display = new SandDisplay("Falling Sand", numRows, numCols, names);
   }
 
@@ -142,40 +147,34 @@ public class SandLab {
     int col = (int)(Math.random() * grid[0].length);
     switch(grid[row][col]) {
       case SAND:
-        // Interactable Objects
-        int[] interactableObj = {EMPTY, WATER};
+        if (row < grid.length -1) { // If the sand is not reached to the bottom yet.
+          int[] intObj = {EMPTY, WATER, OIL}; // Interactable Objects
+          int type = checkType(grid[row + 1][col], intObj); // Can be -1, EMPTY, or WATER.
 
-        // If the sand is not reached to the bottom yet.
-        if (row < grid.length -1) {
-          // can be -1, EMPTY, or WATER.
-          int type = checkType(grid[row + 1][col], interactableObj);
-
-          // If nothing or water exist under the sand, fall down one row.
-          if (type != -1) {
+          if (type != -1) { // If nothing or water exist under the sand, fall down one row.
             grid[row][col] = type;
             grid[row + 1][col] = SAND;
           } else if (grid[row + 1][col] == SAND) { // If there is a another sand exist under the sand.
-            if (col == grid[0].length - 1) { // If the location is rightmost
-              int left = checkType(grid[row + 1][col - 1], interactableObj);
+            if (col >= grid[0].length - 1) { // If the location is rightmost
+              int left = checkType(grid[row + 1][col - 1], intObj);
               if (left != -1) { // Check left side
                 grid[row][col] = left;
                 grid[row + 1][col - 1] = SAND;
               }
               return;
-            } else if (col == 0) { // If the location is leftmost
-              int right = checkType(grid[row + 1][col + 1], interactableObj);
+            } else if (col <= 0) { // If the location is leftmost
+              int right = checkType(grid[row + 1][col + 1], intObj);
               if (right != -1) { // Check right side
                 grid[row][col] = right;
                 grid[row + 1][col + 1] = SAND;
               }
               return;
             }
-            int left = checkType(grid[row + 1][col - 1], interactableObj);
-            int right = checkType(grid[row + 1][col + 1], interactableObj);
-            // If either left or right side of the bottom sand is empty,
-            if (left != -1 && right != -1) {
-              // randomly assigned the sand either left or right side.
-              int LR = (int) (Math.random() * 2);
+
+            int left = checkType(grid[row + 1][col - 1], intObj);
+            int right = checkType(grid[row + 1][col + 1], intObj);
+            if (left != -1 && right != -1) { // If either left or right side of the bottom sand is empty,
+              int LR = (int) (Math.random() * 2); // randomly assigned the sand either left or right side.
               if (LR == 0) {
                 grid[row][col] = right; // Exchange with right side obj.
                 grid[row + 1][col + 1] = SAND;
@@ -195,14 +194,19 @@ public class SandLab {
         break;
       case WATER:
         if (row < grid.length -1) {
-          if (grid[row + 1][col] == EMPTY) {
-            grid[row][col] = EMPTY;
+          int[] intObj = {EMPTY, OIL};
+
+          int type = checkType(grid[row + 1][col], intObj);
+          if (type != -1) {
+            grid[row][col] = type;
             grid[row + 1][col] = WATER;
           } else if (grid[row + 1][col] == WATER) {
             int leftEmpty = 0;
             int rightEmpty = 0;
+            int left = 0, right = 0;
             for (int i = 0; i < col + 1; i++) {
-              if (grid[row + 1][col - i] == EMPTY) {
+              left = checkType(grid[row + 1][col - i], intObj);
+              if (left != -1) {
                 leftEmpty = i;
                 break;
               } else if (grid[row + 1][col - i] != WATER) {
@@ -210,7 +214,8 @@ public class SandLab {
               }
             }
             for (int i = 0; i < grid[0].length - col; i++) {
-              if (grid[row + 1][col + i] == EMPTY) {
+              right = checkType(grid[row + 1][col + i], intObj);
+              if (right != -1) {
                 rightEmpty = i;
                 break;
               } else if (grid[row + 1][col + i] != WATER) {
@@ -218,32 +223,91 @@ public class SandLab {
               }
             }
             if (leftEmpty == rightEmpty && leftEmpty == 0) {
-              return;
+              int rd = (int)(Math.random() * 3) - 1;
+              if (col + rd > 1 && col + rd < grid[0].length - 2) {
+                int change = checkType(grid[row][col + rd], intObj);
+                if (change != -1) {
+                  grid[row][col] = change;
+                  grid[row][col + rd] = WATER;
+                }
+              }
             } else {
-              grid[row][col] = EMPTY;
-              if (leftEmpty > rightEmpty)
+              if (leftEmpty > rightEmpty) {
+                grid[row][col] = left;
                 grid[row + 1][col - leftEmpty] = WATER;
-              else
+              } else {
+                grid[row][col] = right;
                 grid[row + 1][col + rightEmpty] = WATER;
+              }
             }
           }
         }
         break;
       case OIL:
-        display.setColor(row, col, new Color(40, 20, 5));
-        break;
-      case WOOD:
-        display.setColor(row, col, new Color(120, 60, 0));
-        break;
-      case LEAF:
-        display.setColor(row, col, new Color(70, 160, 0));
+        if (row < grid.length -1) {
+          if (grid[row + 1][col] == EMPTY) {
+            grid[row][col] = EMPTY;
+            grid[row + 1][col] = OIL;
+          } else if (grid[row + 1][col] == OIL) {
+            int leftEmpty = 0;
+            int rightEmpty = 0;
+            for (int i = 0; i < col + 1; i++) {
+              if (grid[row + 1][col - i] == EMPTY) {
+                leftEmpty = i;
+                break;
+              } else if (grid[row + 1][col - i] != OIL) {
+                break;
+              }
+            }
+            for (int i = 0; i < grid[0].length - col; i++) {
+              if (grid[row + 1][col + i] == EMPTY) {
+                rightEmpty = i;
+                break;
+              } else if (grid[row + 1][col + i] != OIL) {
+                break;
+              }
+            }
+            if (leftEmpty == rightEmpty && leftEmpty == 0) {
+              int rd = (int)(Math.random() * 3) - 1;
+              if (col + rd > 1 && col + rd < grid[0].length - 2) {
+                if (grid[row][col + rd] == EMPTY) {
+                  grid[row][col] = EMPTY;
+                  grid[row][col + rd] = OIL;
+                }
+              }
+            } else {
+              grid[row][col] = EMPTY;
+              if (leftEmpty > rightEmpty)
+                grid[row + 1][col - leftEmpty] = OIL;
+              else
+                grid[row + 1][col + rightEmpty] = OIL;
+            }
+          }
+        }
         break;
       case ICE:
-        display.setColor(row, col, new Color(170, 220, 255));
+        int rd = (int)(Math.random() * 100) + 1; // 4/100 chance
+        switch (rd){
+          case 1: // Up
+            if (row - 1 > 0 && grid[row - 1][col] == WATER)
+              grid[row - 1][col] = ICE;
+            break;
+          case 2: // Down
+            if (row + 1 < grid.length && grid[row + 1][col] == WATER)
+              grid[row + 1][col] = ICE;
+            break;
+          case 3: // Left
+            if (col > 0 && grid[row][col - 1] == WATER)
+              grid[row][col - 1] = ICE;
+            break;
+          case 4: // Right
+            if (col < grid[0].length - 1 && grid[row][col + 1] == WATER)
+              grid[row][col + 1] = ICE;
+            break;
+        }
         break;
       case FIRE:
-        int offset = (int)(Math.random()*20-10);
-        display.setColor(row, col, new Color(255 + offset, 100 + offset, 0));
+
         break;
       case LAVA:
         display.setColor(row, col, new Color(255, 50, 0));
@@ -262,6 +326,15 @@ public class SandLab {
         break;
       case STEAM:
         display.setColor(row, col, new Color(120, 210, 255));
+        break;
+      case GRASS:
+        display.setColor(row, col, new Color(40, 20, 5));
+        break;
+      case GAS:
+        display.setColor(row, col, new Color(40, 20, 5));
+        break;
+      case CLEAR:
+        grid = new int[grid.length][grid[0].length];
         break;
       default:
         break;
