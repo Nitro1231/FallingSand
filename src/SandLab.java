@@ -2,20 +2,72 @@
  * SandLab.java: an expandible falling-sand game.
  * My custom particles and their are listed below.
  *
- * Metal
- * Sand
- * Water
- * Oil
- * Wood
- * Leaf
- * Ice
- * Fire
- * Lava
- * Stone
- * Obsidian
- * TNT
- * Soil
- * Steam
+ * **See attached MAP.png**
+ *
+ * Empty:
+ *   Eraser...
+ *
+ * Sand:
+ *   Falling down in form of triangle.
+ *   Sink down when reacted with WATER, LAVA, STEAM, OIL, and GAS (or more).
+ *
+ *   Falling down, check which side does not have water, and filled that equally as possible.
+ *
+ * Oil:
+ *   Same as WATER, but stay above the WATER.
+ *   Burnable object, and burn fast.
+ *
+ * Lava:
+ *   Works similar as Fire and WATER.
+ *   It will form STONE if WATER is under the LABA.
+ *   It will form OBSIDIAN if WATER is above the LABA.
+ *
+ * Fire:
+ *   Burn up things or spread fire at different speeds.Or disappear after a random time.
+ *   Just burn in different speed: FIRE, TNT, GAS, OIL, LEAF, WOOD
+ *   WATER: formed STEAM when it reacts with.
+ *   ICE: formed STEAM and WATER when it reacts with.
+ *   SAND: turn into glass.
+ *
+ * Ice:
+ *   Freeze WATER. When it reacts with STEAM, formed WATER.
+ *
+ * Steam:
+ *   Works similarly with WATER, but upside down.
+ *   It will be formed when WATER reacts with FIRE or LAVA.
+ *   Formed WATER when it reacts with ICE.
+ *
+ * Stone:
+ *   Fall down straightly.
+ *
+ * Metal:
+ *   Just stay at position, not burnable.
+ *
+ * Obsidian:
+ *   Same as metal; It will formed when WATER is above the LABA.
+ *
+ * Glass:
+ *   Same as metal; It will be formed when SAND is heated.
+ *
+ * Wood:
+ *   Same as METAL, but burnable.
+ *   WOOD burns slower than LEAF.
+ *
+ * Leaf:
+ *   Same as METAL, but burnable.
+ *   LEAF burns faster than WOOD.
+ *
+ * TNT:
+ *   Burn Fastly... (no idea how to make it explode)
+ *
+ * Gas:
+ *   Spread randomly; Burn fast as TNT.
+ *
+ * Virus:
+ *   Randomly spread through the object, and randomly die.
+ *
+ * Clear:
+ *   Clear all.
  *
  * @author Jun Park
  */
@@ -29,25 +81,26 @@ public class SandLab {
     lab.run();
   }
 
-  //add constants for particle types here
+  // Add constants for particle types here
   public static final int EMPTY = 0;
-  public static final int METAL = 1;      // JUST STAY THERE
-  public static final int SAND = 2;       // *SAND* < WATER, OIL, STEAM, GAS
-  public static final int WATER = 3;      // SAND < *WATER* < OIL, GAS
-  public static final int OIL = 4;        // Work same as WATER, but above WATER
-  public static final int WOOD = 5;       // SAME AS METAL, but burnable
-  public static final int LEAF = 6;       // SAME AS METAL, but burnable
-  public static final int ICE = 7;        // Freeze water / Melt by FIRE
-  public static final int FIRE = 8;       // Interval: TNT, GAS < OIL < LEAF < WOOD < WATER < ICE / Melt ICE / Form STEAM when WATER or ICE is exist
-  public static final int LAVA = 9;       // If WATER is under the LAVA ==> STONE / If Water is above the LAVA ==> OBSIDIAN
-  public static final int STONE = 10;     // Fall down straightly
-  public static final int OBSIDIAN = 11;  // Same as metal
-  public static final int TNT = 12;       // Explosion / React with FIRE and LAVA
-  public static final int STEAM = 13;     // SAND, SOIL, GAS, OIL, WATER < STEAM
-  public static final int GLASS = 14;     // Formed when SAND react with LAVA and FIRE
-  public static final int GAS = 15;       // Explosion / React with FIRE and LAVA
+  public static final int SAND = 1;
+  public static final int WATER = 2;
+  public static final int OIL = 3;
+  public static final int LAVA = 4;
+  public static final int FIRE = 5;
+  public static final int ICE = 6;
+  public static final int STEAM = 7;
+  public static final int STONE = 8;
+  public static final int METAL = 9;
+  public static final int OBSIDIAN = 10;
+  public static final int GLASS = 11;
+  public static final int WOOD = 12;
+  public static final int LEAF = 13;
+  public static final int TNT = 14;
+  public static final int GAS = 15;
+  public static final int VIRUS = 16;
 
-  public static final int CLEAR = 16;     // Clear all
+  public static final int CLEAR = 17;
 
   // Do not add any more fields
   private int[][] grid;
@@ -56,23 +109,24 @@ public class SandLab {
   public SandLab(int numRows, int numCols) {
     grid = new int[numRows][numCols]; // Initialize the board.
     String[] names;
-    names = new String[17];
+    names = new String[18];
     names[EMPTY] = "Empty";
-    names[METAL] = "Metal";
     names[SAND] = "Sand";
     names[WATER] = "Water";
     names[OIL] = "Oil";
+    names[LAVA] = "Lava";
+    names[FIRE] = "Fire";
+    names[ICE] = "Ice";
+    names[STEAM] = "Steam";
+    names[STONE] = "Stone";
+    names[METAL] = "Metal";
+    names[OBSIDIAN] = "Obsidian";
+    names[GLASS] = "Glass";
     names[WOOD] = "Wood";
     names[LEAF] = "Leaf";
-    names[ICE] = "Ice";
-    names[FIRE] = "Fire";
-    names[LAVA] = "Lava";
-    names[STONE] = "Stone";
-    names[OBSIDIAN] = "Obsidian";
     names[TNT] = "TNT";
-    names[STEAM] = "Steam";
-    names[GLASS] = "Glass";
     names[GAS] = "Gas";
+    names[VIRUS] = "Virus";
     names[CLEAR] = "Clear";
     display = new SandDisplay("Falling Sand - Jun Park", numRows, numCols, names);
   }
@@ -92,9 +146,6 @@ public class SandLab {
           case EMPTY:
             display.setColor(row, col, new Color(10, 10, 10));
             break;
-          case METAL:
-            display.setColor(row, col, new Color(40, 40, 40));
-            break;
           case SAND:
             display.setColor(row, col, new Color(255, 200, 0));
             break;
@@ -105,38 +156,44 @@ public class SandLab {
           case OIL:
             display.setColor(row, col, new Color(40 + offset, 30 + offset, 5));
             break;
+          case LAVA:
+            display.setColor(row, col, new Color(215 + offset, 50 + offset, 30 + offset));
+            break;
+          case FIRE:
+            display.setColor(row, col, new Color(215 + offset, 100 + offset, 0));
+            break;
+          case ICE:
+            display.setColor(row, col, new Color(170, 220, 255));
+            break;
+          case STEAM:
+            display.setColor(row, col, new Color(120 + offset, 210 + offset, 255));
+            break;
+          case STONE:
+            display.setColor(row, col, new Color(150, 150, 150));
+            break;
+          case METAL:
+            display.setColor(row, col, new Color(40, 40, 40));
+            break;
+          case OBSIDIAN:
+            display.setColor(row, col, new Color(110, 0, 180));
+            break;
+          case GLASS:
+            display.setColor(row, col, new Color(230, 230, 230));
+            break;
           case WOOD:
             display.setColor(row, col, new Color(120, 60, 0));
             break;
           case LEAF:
             display.setColor(row, col, new Color(70, 160, 0));
             break;
-          case ICE:
-            display.setColor(row, col, new Color(170, 220, 255));
-            break;
-          case FIRE:
-            display.setColor(row, col, new Color(215 + offset, 100 + offset, 0));
-            break;
-          case LAVA:
-            display.setColor(row, col, new Color(215 + offset, 50 + offset, 30 + offset));
-            break;
-          case STONE:
-            display.setColor(row, col, new Color(150, 150, 150));
-            break;
-          case OBSIDIAN:
-            display.setColor(row, col, new Color(110, 0, 180));
-            break;
           case TNT:
             display.setColor(row, col, new Color(170, 0, 0));
             break;
-          case STEAM:
-            display.setColor(row, col, new Color(120 + offset, 210 + offset, 255));
-            break;
-          case GLASS:
-            display.setColor(row, col, new Color(230, 230, 230));
-            break;
           case GAS:
             display.setColor(row, col, new Color(230 + offset, 160 + offset, 190 + offset));
+            break;
+          case VIRUS:
+            display.setColor(row, col, new Color(100 + offset, 225 + offset, 30 + offset));
             break;
         }
       }
@@ -146,6 +203,7 @@ public class SandLab {
   // Called repeatedly.
   // Causes one random particle to maybe do something.
   public void step() {
+    // Randomly pick one particle from the grid.
     int row = (int)(Math.random() * grid.length);
     int col = (int)(Math.random() * grid[0].length);
     switch(grid[row][col]) {
@@ -212,141 +270,51 @@ public class SandLab {
         break;
       }
       case LAVA: {
-        if (row < grid.length - 1 && delay(20)) {
-          if (grid[row + 1][col] == WATER) {
-            if (delay(5)){
-              grid[row][col] = STEAM;
-              grid[row + 1][col] = STONE;
-            } else {
-              grid[row][col] = STONE;
-            }
-          } else if (row > 0 && grid[row - 1][col] == WATER) {
+        if (row < grid.length - 1 && delay(20)) { // Add delay to make it slower than WATER and OIL.
+          if (grid[row + 1][col] == WATER) { // If LAVA is exist above the WATER,
             grid[row][col] = STEAM;
-            grid[row + 1][col] = OBSIDIAN;
+            grid[row + 1][col] = STONE; // Formed STONE.
+          } else if (row > 0 && grid[row - 1][col] == WATER) { // If WATER is exist above the LAVA,
+            grid[row][col] = STEAM;
+            grid[row + 1][col] = OBSIDIAN; // Formed OBSIDIAN.
           }
-
-          int[] intObj = {EMPTY, STEAM, GAS, FIRE};
+          int[] intObj = {EMPTY, STEAM, GAS, FIRE}; // Objects that LAVA will ignore.
           waterPhysics(row, col, LAVA, intObj); // Apply water physics to LAVA.
         }
-
-        int[] burnableObj = {TNT, GAS, OIL, LEAF, WOOD, WATER, ICE, SAND};
-        int[] newLoc = surroundCheck(row, col);
-        int type = checkType(grid[newLoc[0]][newLoc[1]], burnableObj);
-        switch (type) {
-          case TNT:
-          case GAS:
-            if (delay(3))
-              grid[newLoc[0]][newLoc[1]] = FIRE;
-            break;
-          case OIL:
-            if (delay(7))
-              grid[newLoc[0]][newLoc[1]] = FIRE;
-            break;
-          case LEAF:
-            if (delay(10))
-              grid[newLoc[0]][newLoc[1]] = FIRE;
-            break;
-          case WOOD:
-            if (delay(20))
-              grid[newLoc[0]][newLoc[1]] = FIRE;
-            break;
-          case ICE:
-            if (newLoc[0] - 1 > 0 && delay(40)) {
-              grid[row][col] = LAVA;
-              grid[newLoc[0]][newLoc[1]] = WATER;
-              grid[newLoc[0] - 1][newLoc[1]] = STEAM;
-            }
-            break;
-          case SAND:
-            grid[row][col] = EMPTY;
-            grid[newLoc[0]][newLoc[1]] = GLASS;
-            break;
-        }
+        int[] burnableObj = {TNT, GAS, OIL, LEAF, WOOD, SAND, ICE, VIRUS}; // Burnable Objects; not including WATER and ICE, because we code already handle it in 272~278 line.
+        burnObject(row, col, burnableObj); // Randomly select object in 3*3 area, and burn it.
         break;
       }
       case FIRE: {
-        int[] burnableObj = {FIRE, TNT, GAS, OIL, LEAF, WOOD, WATER, ICE, SAND};
-        int[] newLoc = surroundCheck(row, col);
-        int type = checkType(grid[newLoc[0]][newLoc[1]], burnableObj);
-        switch (type) {
-          case FIRE:
-            if (delay(80))
-              grid[newLoc[0]][newLoc[1]] = EMPTY;
-            if (newLoc[0] - 1 > 0 && delay(85))
-              if (grid[newLoc[0] - 1][newLoc[1]] == EMPTY)
-                grid[newLoc[0] - 1][newLoc[1]] = FIRE;
-            break;
-          case TNT:
-          case GAS:
-            if (delay(3))
-              grid[newLoc[0]][newLoc[1]] = FIRE;
-            break;
-          case OIL:
-            if (delay(7))
-              grid[newLoc[0]][newLoc[1]] = FIRE;
-            break;
-          case LEAF:
-            if (delay(20))
-              grid[newLoc[0]][newLoc[1]] = FIRE;
-            break;
-          case WOOD:
-            if (delay(30))
-              grid[newLoc[0]][newLoc[1]] = FIRE;
-            break;
-          case WATER:
-            if (newLoc[0] - 1 > 0 && delay(100)) {
-              grid[row][col] = EMPTY;
-              grid[newLoc[0]][newLoc[1]] = FIRE;
-              grid[newLoc[0] - 1][newLoc[1]] = STEAM;
-            }
-            break;
-          case ICE:
-            if (newLoc[0] - 1 > 0 && delay(200)) {
-              grid[row][col] = EMPTY;
-              grid[newLoc[0]][newLoc[1]] = WATER;
-              grid[newLoc[0] - 1][newLoc[1]] = STEAM;
-            }
-            break;
-          case SAND:
-            if (delay(20)) {
-              grid[row][col] = GLASS;
-              grid[newLoc[0]][newLoc[1]] = GLASS;
-            }
-            break;
+        if (delay(80)) // Self destroy.
+          grid[row][col] = EMPTY;
+        if (row - 1 > 0 && delay(85)) { // Spread upward.
+          if (grid[row - 1][col] == EMPTY)
+            grid[row - 1][col] = FIRE;
         }
+        int[] burnableObj = {TNT, GAS, OIL, LEAF, WOOD, WATER, ICE, SAND, VIRUS}; // Burnable Objects.
+        burnObject(row, col, burnableObj); // Randomly select object in 3*3 area, and burn it.
         break;
       }
       case ICE: {
         if (delay(15)) {
-          int[] newLoc = surroundCheck(row, col);
-          if (grid[newLoc[0]][newLoc[1]] == WATER)
+          int[] newLoc = surroundCheck(row, col); // Get random loc
+          if (grid[newLoc[0]][newLoc[1]] == WATER) // If there is WATER near by ICE, frozen it.
             grid[newLoc[0]][newLoc[1]] = ICE;
-          if (grid[newLoc[0]][newLoc[1]] == STEAM)
+          if (grid[newLoc[0]][newLoc[1]] == STEAM) // If there is STEAM near by ICE, form the WATER.
             grid[newLoc[0]][newLoc[1]] = WATER;
         }
         break;
       }
-      case STONE: {
-        if (row < grid.length - 1 && delay(5)) { // If the sand is not reached to the bottom yet.
-          int[] intObj = {EMPTY, WATER, OIL, LAVA, GAS, FIRE, STEAM}; // Interactable Objects
-          int type = checkType(grid[row + 1][col], intObj); // Can be -1, EMPTY, or WATER.
-
-          if (type != -1) { // If nothing or water exist under the sand, fall down one row.
-            grid[row][col] = type;
-            grid[row + 1][col] = STONE;
-          }
-        }
-        break;
-      }
-      case STEAM: {
+      case STEAM: { // STEAM is basically inverse of WATER.
         if (row > 0 && delay(10)) {
           int[] intObj = {EMPTY, SAND, GAS, OIL, WATER, LAVA, FIRE}; // Interactable Objects
 
-          int type = checkType(grid[row - 1][col], intObj); // Can be -1, EMPTY, or WATER.
-          if (type != -1) { // If nothing or water exist under the sand, fall down one row.
+          int type = checkType(grid[row - 1][col], intObj); // Check if there is any interactable Objects above the STEAM.
+          if (type != -1) { // If there is a interactable Objects exist, swap the object.
             grid[row][col] = type;
             grid[row - 1][col] = STEAM;
-          } else if (grid[row - 1][col] == STEAM) {
+          } else if (grid[row - 1][col] == STEAM) { // If there is a STEAM exist above the STEAM, Do same thing with WATER but inverse.
             int leftEmpty = 0;
             int rightEmpty = 0;
             int left = 0, right = 0;
@@ -390,11 +358,23 @@ public class SandLab {
         }
         break;
       }
+      case STONE: {
+        if (row < grid.length - 1 && delay(5)) { // If the sand is not reached to the bottom yet.
+          int[] intObj = {EMPTY, WATER, OIL, LAVA, GAS, FIRE, STEAM}; // Interactable Objects
+          int type = checkType(grid[row + 1][col], intObj); // Can be -1, EMPTY, or WATER.
+
+          if (type != -1) { // If nothing or water exist under the sand, fall down one row.
+            grid[row][col] = type;
+            grid[row + 1][col] = STONE;
+          }
+        }
+        break;
+      }
       case GAS: {
         if (delay(5))
           return;
 
-        int newRow = row, newCol = col;
+        int newRow = row, newCol = col; // Get random location but only top, left, right, and bottom. Otherwise, the gas will escape from the container sometimes.
         switch ((int) (Math.random() * 5) + 1) {
           case 1: // Top
             newRow = row - 1;
@@ -413,14 +393,27 @@ public class SandLab {
           newRow = row;
           newCol = col;
         }
-        if (grid[newRow][newCol] == EMPTY) {
+        if (grid[newRow][newCol] == EMPTY) { // Swap object.
           grid[row][col] = EMPTY;
           grid[newRow][newCol] = GAS;
         }
         break;
       }
-      case CLEAR: {
-        grid = new int[grid.length][grid[0].length];
+      case VIRUS: {
+        if (delay(5)) // Delay.
+          return;
+
+        if (delay(100)) {
+          int[] newLoc = surroundCheck(row, col); // Pick random location.
+          if (grid[newLoc[0]][newLoc[1]] != EMPTY) // If the location is not empty.
+            grid[newLoc[0]][newLoc[1]] = VIRUS; // Infect object.
+        }
+        if (delay(400)) // Destroy itself.
+          grid[row][col] = EMPTY;
+        break;
+      }
+      case CLEAR: { // Clear all.
+        grid = new int[grid.length][grid[0].length]; // Initialize the board again.
         break;
       }
       default: {
@@ -495,12 +488,63 @@ public class SandLab {
     }
   }
 
+  /** Burn objects... This physics will apply on FIRE and LAVA.
+   * @param burnableObj Array of int that holds the objects that are burnable.
+   */
+  public void burnObject(int row, int col, int[] burnableObj){
+    int[] newLoc = surroundCheck(row, col); // Get random location in 3*3 area.
+    int type = checkType(grid[newLoc[0]][newLoc[1]], burnableObj); // Check which object is exists at newLoc.
+    switch (type) {
+      case TNT:
+      case GAS:
+        if (delay(3))
+          grid[newLoc[0]][newLoc[1]] = FIRE;
+        break;
+      case OIL:
+        if (delay(7))
+          grid[newLoc[0]][newLoc[1]] = FIRE;
+        break;
+      case LEAF:
+        if (delay(20))
+          grid[newLoc[0]][newLoc[1]] = FIRE;
+        break;
+      case WOOD:
+        if (delay(30))
+          grid[newLoc[0]][newLoc[1]] = FIRE;
+        break;
+      case VIRUS:
+        if (delay(15))
+          grid[newLoc[0]][newLoc[1]] = FIRE;
+        break;
+      case WATER: // Formed STEAM when WATER evaporate.
+        if (newLoc[0] - 1 > 0 && delay(100)) {
+          grid[row][col] = EMPTY;
+          grid[newLoc[0]][newLoc[1]] = FIRE;
+          grid[newLoc[0] - 1][newLoc[1]] = STEAM;
+        }
+        break;
+      case ICE: // Formed STEAM when ICE melted.
+        if (newLoc[0] - 1 > 0 && delay(200)) {
+          grid[row][col] = EMPTY;
+          grid[newLoc[0]][newLoc[1]] = WATER;
+          grid[newLoc[0] - 1][newLoc[1]] = STEAM;
+        }
+        break;
+      case SAND: // Turn SAND into the GLASS
+        if (delay(20)) {
+          grid[row][col] = GLASS;
+          grid[newLoc[0]][newLoc[1]] = GLASS;
+        }
+        break;
+    }
+  }
+
   /** Randomly select one of the 3 * 3 areas that is adjacent to the object.
    * @return Array of int that hold row and col value. First array would hold row and second would hold col.
    */
   public int[] surroundCheck (int row, int col) {
     int[] newLoc = {row, col};
-    switch ((int) (Math.random() * 9) + 1) {
+    switch ((int) (Math.random() * 9) + 1) { // Randomly select the area.
       case 1: // Left && Top
         newLoc[0] = row - 1;
         newLoc[1] = col - 1;
@@ -530,6 +574,7 @@ public class SandLab {
         newLoc[1] = col + 1;
         break;
     }
+    // Check if newLoc is out of the bound.
     if (newLoc[0] < 0 || newLoc[0] > grid.length - 1 || newLoc[1] < 0 || newLoc[1] > grid[0].length - 1) {
       newLoc[0] = row;
       newLoc[1] = col;
