@@ -11,6 +11,7 @@
  *   Falling down in form of triangle.
  *   Sink down when reacted with WATER, LAVA, STEAM, OIL, and GAS (or more).
  *
+ * Water:
  *   Falling down, check which side does not have water, and filled that equally as possible.
  *
  * Oil:
